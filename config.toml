@@ -1,3 +1,22 @@
-baseURL = 'http://example.org/'
-languageCode = 'en-us'
-title = 'My New Hugo Site'
+baseURL = 'https://charliedyson.net/'
+languageCode = 'en'
+title = 'charliedyson.net'
+theme="manis"
+
+[permalinks]
+    blog = "/:year/:month/:filename/"
+
+
+[params]
+    tagline = "Some thinkings"
+    dateFmt = "02 Jan 2006"
+
+    # utterancesRepo = ""
+    # utterancesTheme = "github-light"
+    # utterancesLabel = ""
+
+    colorTheme = "#ff6565"
+
+    email = "charlie@charliedyson.net"
+    linkedin = "https://www.linkedin.com/in/charlie-dyson-a701a31a5"
+    github = "https://github.com/cdyson37"
