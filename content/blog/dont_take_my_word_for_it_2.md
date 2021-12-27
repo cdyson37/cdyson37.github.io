@@ -4,7 +4,7 @@ date: 2021-12-26
 summary: "Using compiler error messages to accurately determine a type."
 ---
 
-So far we've covered:
+So far in [Part 1]({{< ref "dont_take_my_word_for_it_1" >}}) we've covered:
 * using `typeid` to get the type of a variable, subject to a friendly compiler vendor and losing the top-level const if there is one, and
 * using `typeid` to get the dynamic type of something.
 

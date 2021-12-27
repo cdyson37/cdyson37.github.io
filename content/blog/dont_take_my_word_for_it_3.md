@@ -4,7 +4,7 @@ date: 2021-12-27
 summary: "How are template arguments to a function deduced? We will generate a helpful reference table."
 ---
 
-In Part 1 we looked at the `typeid` operator and in Part 2 we used a little cheat to work out mystery types using compiler error messages.
+In [Part 1]({{< ref "dont_take_my_word_for_it_1" >}}) we looked at the `typeid` operator and in [Part 2]({{< ref "dont_take_my_word_for_it_2" >}}) we used a little cheat to work out mystery types using compiler error messages.
 
 Let's take this a bit further and try to answer a general question: if I call some function template `f(T x)`, `f(T &x)`, `f(T &&x)` (or `const` versions of any of those) with an `int`, `int&` or `int&&` (or `const` versions of any of those), to what does `T` deduce? And what's the resulting type of `x`?
 
