@@ -1,0 +1,16 @@
+{{ with .Site.Params.Email }}
+<a href="mailto:{{.}}"><img class="icon-social" src="/img/email.svg" alt="Email Me!"/></a>
+{{ end }}
+{{ with .Site.Params.Github }}
+<a href="{{.}}"><img class="icon-social" src="/img/github.svg" alt="Github"/></a>
+{{ end }}
+{{ with .Site.Params.Twitter }}
+<a href="{{.}}"><img class="icon-social" src="/img/twitter.svg" alt="Twitter"/></a>
+{{ end }}
+{{ with .Site.Params.Linkedin}}<!-- https://friconix.com/icon/fi-swluxl-linkedin/ -->
+<a href="{{.}}"><svg width="30" height="30" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg"><path d="M 100 0C 45 0 0 45 0 100C 0 100 0 900 0 900C 0 955 45 1000 100 1000C 100 1000 900 1000 900 1000C 955 1000 1000 955 1000 900C 1000 900 1000 100 1000 100C 1000 45 955 0 900 0C 900 0 100 0 100 0C 100 0 100 0 100 0M 100 75C 100 75 900 75 900 75C 914 75 925 86 925 100C 925 100 925 900 925 900C 925 914 914 925 900 925C 900 925 100 925 100 925C 86 925 75 914 75 900C 75 900 75 100 75 100C 75 86 86 75 100 75C 100 75 100 75 100 75 M 336 332C 336 332 336 789 336 789C 336 789 211 789 211 789C 211 789 211 332 211 332C 211 332 336 332 336 332M 346 206C 346 206 346 206 346 206C 346 247 313 280 273 280C 233 280 201 247 201 206C 201 166 233 133 273 133C 313 133 346 166 346 206M 834 508C 834 508 834 789 834 789C 834 789 709 789 709 789C 709 789 709 556 709 556C 709 416 543 427 543 556C 543 556 543 789 543 789C 543 789 419 789 419 789C 419 789 419 332 419 332C 419 332 543 332 543 332C 543 332 543 406 543 406C 601 298 834 290 834 508"/></svg></a>
+{{ end }}
+<a href="{{.Site.RSSLink}}" target="_blank"><img class="icon-social" src="/img/feed.svg" alt="Feed"></a>
+{{ with .Site.Params.Twitch}}
+<a href="{{.}}"><img class="icon-social" src="/img/twitch.svg" alt="Twitch"/></a>
+{{ end }}
