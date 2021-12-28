@@ -80,3 +80,5 @@ int main ()
 }
 ```
 Because why wouldn't you call your useless struct `X` and your impossible variable `_`? :)
+
+In this part of the series, we've looked at the using error messages to deduce types. In [Part 3]({{< ref "dont_take_my_word_for_it_3" >}}) we will try to answer a general question about type deduction by generating a fancy table.

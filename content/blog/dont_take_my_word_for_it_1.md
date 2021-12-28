@@ -90,3 +90,5 @@ Output ([compiler explorer](https://godbolt.org/z/bPrc9Moec)):
 false
 true
 ```
+
+So far we've looked at the uses of `typeid`. In [Part 2]({{< ref "dont_take_my_word_for_it_2" >}}) we will use a trick to work out mystery types using compiler error messages.
