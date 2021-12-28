@@ -15,7 +15,7 @@ Types are objects. `type(some_object)` returns an object that happens to be the 
 
 No such luck in C++: types are not objects. If you try to do `std::cout << std::string` you'll get an angry compiler (`std::string` is not an object, it's a type, so you can't just pass it to some overload of `operator<<`).
 
-A bit of Googling later, you might come across the `typeid` operator which returns a `std::type_info` object, which as a `name()` function. So far this appears pretty helpful. Giving it a test drive...
+A bit of Googling later, you might come across the `typeid` operator which returns a `std::type_info` object, which has a `name()` function. So far this appears pretty helpful. Giving it a test drive:
 ```c++
 #include <iostream>
 #include <typeinfo>
@@ -51,7 +51,9 @@ std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >
 
 With gcc it's also possible to do this on the fly in C++ (see a nice SO answer [here](https://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname)), but this is strictly vendor-specific.
 
-So we've got something that works, on one compiler at least, and with a little bit of effort prints out the type of a variable. Well, not quite... `typeid` actually gives you the type of an expression. It doesn't have the special fudge `decltype` has, wherein `decltype(x)` means "the type of x" and anything that isn't just a variable name, `decltype((x))`, meaning "the type of the expression". In our specific case, the type of `cpp_string` should be *const* but `typeid` loses the top-level qualifier for us.
+So we've got something that works, on one compiler at least, and with a little bit of effort prints out the type of a variable. Well, not quite... `typeid` actually gives you the type of an expression. It doesn't have the special fudge `decltype` has, wherein `decltype(x)` means "the type of `x`" and anything that isn't just a variable name, such as `decltype((x))`, means "the type of the expression".
+
+In our case, both variables should have a top-level const (i.e. `char const * const` and `const std::string`) but `typeid` loses the top-level qualifier for us.
 
 I'm a stranger to the Windows programming world, but I downloaded Visual Studio Community 2022 and ran the same program - here's the output:
 ```

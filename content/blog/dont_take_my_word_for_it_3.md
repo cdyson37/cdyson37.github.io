@@ -6,7 +6,7 @@ summary: "How are template arguments to a function deduced? We will generate a h
 
 In [Part 1]({{< ref "dont_take_my_word_for_it_1" >}}) we looked at the `typeid` operator and in [Part 2]({{< ref "dont_take_my_word_for_it_2" >}}) we used a little cheat to work out mystery types using compiler error messages.
 
-Let's take this a bit further and try to answer a general question: if I call some function template `f(T x)`, `f(T &x)`, `f(T &&x)` (or `const` versions of any of those) with an `int`, `int&` or `int&&` (or `const` versions of any of those), to what does `T` deduce? And what's the resulting type of `x`?
+Let's take this a bit further and try to answer a general question: if I call some function template `f(T x)`, `f(T& x)`, `f(T&& x)` (or `const` versions of any of those) with an `int`, `int&` or `int&&` (or `const` versions of any of those), to what does `T` deduce? And what's the resulting type of `x`?
 
 That's 36 possible combinations in each of two tables (one for `T` and one for `x`). We can work them out on an individual basis with the technique from Part 2. For example if we wanted to know what happens if we call `f(T&& x)` and `x` is `int&&`:
 
@@ -45,9 +45,9 @@ The compiler tells us two things here, courtesy of the helpful error message:
 
 This is exactly what we'd hope to see - `f()` gets an rvalue reference to a moved-from variable.
 
-One case down then, but there are 35 to go to fill out our 6x6 table. Let's try to do them all in one go and make a snazzy table!
+One case down then, but there are 35 to go to fill out our 6x6 tables. Let's try to do them all in one go!
 
-Firstly, let's cheat a little and encode the possible outcome types as strings. We know it can only be `int`, `int&` etc. so there aren't too many:
+Firstly, let's encode the possible outcome types as strings. We know it can only be `int`, `int&` etc. so there aren't too many:
 ```c++
 template <typename T>
 constexpr char* TypeName;
@@ -78,7 +78,7 @@ Next up, for convenience's sake we make a little pair type to store the deduced 
 template <typename T, typename U>
 struct ReturnedType
 {
-  using deduced_template_argument = T; // type of T
+  using deduced_template_argument = T; // type T
   using argument_type = U;             // type of x
 };
 ```
@@ -106,7 +106,7 @@ struct CalledByReference
   auto f (T& x) -> ReturnedType<T, decltype (x)>;
 };
 ```
-i.e. exactly the same but with an extra `&`. Similarly we then define `CalledByForwardingReference` (takes `T&&`), `CalledByConstValue` (takes `const T`), `CalledByConstReference` (takes `const T&`), `CalledByConstForwardingReference` (takes `const T&&`).
+i.e. exactly the same but with an extra `&`. Similarly we then define `CalledByForwardingReference` (takes `T&&`), `CalledByConstValue` (takes `const T`), `CalledByConstReference` (takes `const T&`), `CalledByConstForwardingReference` (takes `const T&&` - we wills see below that this is a bit of a misnomer).
 
 We're almost there. We just need a little helper that takes e.g. `CalledByValue` and `int&` as template arguments and returns either a string of type `T` or a string of the type of `x`. Firstly we'll define an enum to choose which of those two things we want in our table:
 ```c++
@@ -119,7 +119,7 @@ enum class TableType
 
 Our function is then
 ```c++
-template <typename Target, typename Arg, TableType table_type>
+template <TableType table_type, typename Target, typename Arg>
 auto get_type_name ()
 {
 
@@ -157,16 +157,16 @@ First, a function to make to make a single table row. Here `table_type` specifie
 template <TableType table_type, typename Target>
 void make_table_row ()
 {
-  std::cout << get_type_name<Target, int, table_type> () << '|'
-            << get_type_name<Target, int&, table_type> () << '|'
-            << get_type_name<Target, int&&, table_type> () << '|'
-            << get_type_name<Target, const int, table_type> () << '|'
-            << get_type_name<Target, const int&, table_type> () << '|'
-            << get_type_name<Target, const int&&, table_type> () << "|\n";
+  std::cout << get_type_name<table_type, Target, int> () << '|'
+            << get_type_name<table_type, Target, int&> () << '|'
+            << get_type_name<table_type, Target, int&&> () << '|'
+            << get_type_name<table_type, Target, const int> () << '|'
+            << get_type_name<table_type, Target, const int&> () << '|'
+            << get_type_name<table_type, Target, const int&&> () << "|\n";
 }
 ```
 
-We use the pipe symbol as a delimiter so I can easily put this into a Markdown table.
+We use the pipe symbol as a delimiter so we can easily put this into a Markdown table.
 
 Making a whole table just means calling this once per row, with a header at the top:
 ```c++
@@ -209,7 +209,7 @@ int main ()
 }
 ```
 
-Phew. Here's the complete program on [compiler explorer](https://godbolt.org/z/vsTeE3xc1). Now let's look at the two tables:
+Phew. Here's the complete program on [compiler explorer](https://godbolt.org/z/dv8czvMzq). Now let's look at the two tables:
 
 **T deduces as ... when called with:**
 ||int|int&|int&&|const int|const int &|const int &&|
@@ -231,22 +231,23 @@ Phew. Here's the complete program on [compiler explorer](https://godbolt.org/z/v
 |f(const T&& x)|const int&&|-|const int&&|const int&&|-|const int&&|
 |f(T&& x)|int&&|int&|int&&|const int&&|const int&|const int&&|
 
-To pick an example, if we have `f(T&& x)` and we call it with a `const int `, then `T` will be `const int&` (first table) and `x` will have type `const int&&` (second table). The "-"s represent arguments that can't be used for a particular function - you'd get a compiler error.
+To pick an example, if we have `f(T&& x)` and we call it with a `const int`, then `T` will be `const int` (first table) and `x` will have type `const int&&` (second table). The "-"s represent arguments that can't be used for a particular function - you'd get a compiler error.
 
 The table seems to be consistent with a few half-remembered rules of thumb:
 * `T` never deduces as a reference, unless you're in the `f(T&&)` magic case.
 * With `f(const T x)`, the `const` makes no difference at all to the deduction of `T`, it's just to prevent us from changing `x` in the function.
 * With `f(T& x)`, `T` deduces as `const` whenever it's needed.
 * `f(T x)` and `f(const T& x)` always work, no matter what you call them with. In latter case, it will extend a reference to a temporary if necessary.
+* `f(T&& x)` always works and will always give you some kind of (possibly const, possibly rvalue) reference.
 
 Another thing to note is that the column for `int` is identical to the column for `int&&`. This makes sense as we never care what sort of rvalue `f()` is being called with: `f(42)` (i.e. with `int`, a prvalue) and `f(std::move(some_int))` (i.e. with `int&&`, an xvalue) should be indistinguishable. We only care if it's an rvalue of one sort or another.
 
 There are four invalid ("-") combinations. In all these cases `T` deduces to `int` (we can confirm by looking at error messages), it's just you can't actually call them:
 * `f(T& x)` with `int`. So e.g. we can't call `f(function_returning_3())`. This is because C++ [won't extend the lifetime](https://en.cppreference.com/w/cpp/language/lifetime#Temporary_object_lifetime) of the resulting temporary - it only does that for a const lvalue reference (i.e. `f(const T&)`) or to an rvalue reference (`f(const T&&)` or `f(T&&)`). If this were allowed, and it extended the lifetime of the temporary, it would make it too easy to write code that appears to be modifying a variable passed by reference, but is actually only modifying a temporary.
 * `f(T& x)` with `int&&`. In this case there's no need to extend a temporary - our `int` isn't going anywhere. But it's disallowed anyway, presumably for consistency between `int` and `int&&` as discussed above.
-* `f(const T&& x)` with `int&`. This is an interesting one. Our `f` in this case does *not* take a forwarding reference. The `const` inhibits the special behaviour, this is back to normal template argument deduction. `T` will never deduce as a reference - it's just plain `int` - so then we'just trying to call `f(int&&)` with an `int&`, which is obviously not allowed (if it were allowed, `f()` might move from something that it's not safe to move from).
+* `f(const T&& x)` with `int&`. This is an interesting one. Our `f` in this case does *not* take a forwarding reference. The `const` inhibits the special behaviour, so this is back to normal template argument deduction. `T` will never deduce as a reference - it's just plain `int` - so then we are just trying to call `f(int&&)` with an `int&`, which is obviously not allowed (if it were allowed, `f()` might move from something that it's not safe to move from).
 * `f(const T&& x)` with `const int&`. Pretty much the same story as above, although because of the `const` it wouldn't actually be dangerous if it were allowed, just pointless and misleading.
 
-# Conclusions
+# Summary
 
 In Part 1 we looked at getting type information dynamically with the `typeid` operator, which produces useful-ish output but is better suited to checking the dynamic type of objects at runtime. In Part 2 we used a trick involving an incomplete type to get the compiler to print the mystery type as an error message. In Part 3 we used variable templates to give strings to the types we were interested in, then produced a table of deduced template arguments when calling templated functions.

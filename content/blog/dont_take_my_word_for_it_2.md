@@ -23,7 +23,7 @@ int main ()
 }
 ```
 
-Compiler output on gcc ((compiler explorer)[https://godbolt.org/z/MPYjTWva7]):
+Compiler output on gcc ([compiler explorer](https://godbolt.org/z/MPYjTWva7)):
 ```
 <source>: In function 'int main()':
 <source>:9:11: error: cannot convert 'const std::__cxx11::basic_string<char>' to 'int' in initialization
@@ -33,7 +33,7 @@ Compiler output on gcc ((compiler explorer)[https://godbolt.org/z/MPYjTWva7]):
       |           const std::__cxx11::basic_string<char>```
 ```
 
-Similarly with `const auto c_string = "foo"` we get `error: invalid conversion from 'const char*' to 'int'`. Note the slightly different error messages: evidently the compiler thinks quite differently about built-in conversions (in our case pointer-to-char and int) than it thinks about user-defined conversions (yes `std::string` from a `char*` counts as user-defined, even though it's in the standard library). In particular, *we have again lost a `const`* in this second message, as we will see shortly.
+Similarly with `const auto c_string = "foo"` we get `error: invalid conversion from 'const char*' to 'int'`. Note the slightly different error messages: evidently the compiler thinks quite differently about built-in conversions (in our case pointer-to-char and int) than it thinks about user-defined conversions (yes `std::string` from a `char*` counts as user-defined, even though `std::string` is in the standard library). In particular, we have again lost a `const` in this second message. We also run the risk of the the compiler helpfully listing all the `operator=`s it knows about and spamming the console.
 
 There is a more reliable trick. We know `decltype()` can get the type of a variable or of an expression, but we need to get that type into an error message. Before, we took a value and did something unreasonable with it, now we want to take a type and do something unreasonable with it. Want to do something unreasonable with types? Use a template :).
 
@@ -71,7 +71,7 @@ The key bit is `Incomplete<const char* const> incomplete`. The bit in the angle 
 For maximum unfriendliness and minimal typing, we can reduce this down slightly, using more letters and fewer words and typedefs:
 
 ```c++
-template <typename T> struct X;
+template <typename> struct X;
 
 int main ()
 {
@@ -79,6 +79,6 @@ int main ()
   X<decltype(c_string)> _;
 }
 ```
-Because why wouldn't you call your useless struct `X` and your impossible variable `_`? :)
+Because why wouldn't you call your useless struct `X` and your impossible variable `_`? :) We also don't need `typename T` since we never use the `T`, so plain `typename` will do.
 
 In this part of the series, we've looked at the using error messages to deduce types. In [Part 3]({{< ref "dont_take_my_word_for_it_3" >}}) we will try to answer a general question about type deduction by generating a fancy table.
