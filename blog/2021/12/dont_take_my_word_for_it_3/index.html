@@ -33,7 +33,7 @@
 <hr class=sep>
 </header>
 <p>In <a href=https://charliedyson.net/blog/2021/12/dont_take_my_word_for_it_1/>Part 1</a> we looked at the <code>typeid</code> operator and in <a href=https://charliedyson.net/blog/2021/12/dont_take_my_word_for_it_2/>Part 2</a> we used a little cheat to work out mystery types using compiler error messages.</p>
-<p>Let&rsquo;s take this a bit further and try to answer a general question: if I call some function template <code>f(T x)</code>, <code>f(T &x)</code>, <code>f(T &&x)</code> (or <code>const</code> versions of any of those) with an <code>int</code>, <code>int&</code> or <code>int&&</code> (or <code>const</code> versions of any of those), to what does <code>T</code> deduce? And what&rsquo;s the resulting type of <code>x</code>?</p>
+<p>Let&rsquo;s take this a bit further and try to answer a general question: if I call some function template <code>f(T x)</code>, <code>f(T& x)</code>, <code>f(T&& x)</code> (or <code>const</code> versions of any of those) with an <code>int</code>, <code>int&</code> or <code>int&&</code> (or <code>const</code> versions of any of those), to what does <code>T</code> deduce? And what&rsquo;s the resulting type of <code>x</code>?</p>
 <p>That&rsquo;s 36 possible combinations in each of two tables (one for <code>T</code> and one for <code>x</code>). We can work them out on an individual basis with the technique from Part 2. For example if we wanted to know what happens if we call <code>f(T&& x)</code> and <code>x</code> is <code>int&&</code>:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;utility&gt;</span><span style=color:#75715e>
 </span><span style=color:#75715e></span>
@@ -64,8 +64,8 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <li><code>x</code> is <code>int&&</code>.</li>
 </ul>
 <p>This is exactly what we&rsquo;d hope to see - <code>f()</code> gets an rvalue reference to a moved-from variable.</p>
-<p>One case down then, but there are 35 to go to fill out our 6x6 table. Let&rsquo;s try to do them all in one go and make a snazzy table!</p>
-<p>Firstly, let&rsquo;s cheat a little and encode the possible outcome types as strings. We know it can only be <code>int</code>, <code>int&</code> etc. so there aren&rsquo;t too many:</p>
+<p>One case down then, but there are 35 to go to fill out our 6x6 tables. Let&rsquo;s try to do them all in one go!</p>
+<p>Firstly, let&rsquo;s encode the possible outcome types as strings. We know it can only be <code>int</code>, <code>int&</code> etc. so there aren&rsquo;t too many:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>constexpr</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span> TypeName;
 
@@ -91,7 +91,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T, <span style=color:#66d9ef>typename</span> U<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>ReturnedType</span>
 {
-  <span style=color:#66d9ef>using</span> deduced_template_argument <span style=color:#f92672>=</span> T; <span style=color:#75715e>// type of T
+  <span style=color:#66d9ef>using</span> deduced_template_argument <span style=color:#f92672>=</span> T; <span style=color:#75715e>// type T
 </span><span style=color:#75715e></span>  <span style=color:#66d9ef>using</span> argument_type <span style=color:#f92672>=</span> U;             <span style=color:#75715e>// type of x
 </span><span style=color:#75715e></span>};
 </code></pre></div><p>So - we want to try out e.g. <code>template &lt;typename T> f(T x)</code> with <code>x</code> as <code>int</code>, <code>int&</code> etc. But it&rsquo;s hard to talk about <code>f</code> since it&rsquo;s a template and not a function. We can&rsquo;t just take its address or use it as an argument to a template without first selecting a <code>T</code>, which totally undermines what we&rsquo;re trying to do since we&rsquo;re trying to find out what <code>T</code> would deduce to!</p>
@@ -110,7 +110,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   <span style=color:#66d9ef>static</span>
   <span style=color:#66d9ef>auto</span> f (T<span style=color:#f92672>&amp;</span> x) <span style=color:#f92672>-&gt;</span> ReturnedType<span style=color:#f92672>&lt;</span>T, <span style=color:#66d9ef>decltype</span> (x)<span style=color:#f92672>&gt;</span>;
 };
-</code></pre></div><p>i.e. exactly the same but with an extra <code>&</code>. Similarly we then define <code>CalledByForwardingReference</code> (takes <code>T&&</code>), <code>CalledByConstValue</code> (takes <code>const T</code>), <code>CalledByConstReference</code> (takes <code>const T&</code>), <code>CalledByConstForwardingReference</code> (takes <code>const T&&</code>).</p>
+</code></pre></div><p>i.e. exactly the same but with an extra <code>&</code>. Similarly we then define <code>CalledByForwardingReference</code> (takes <code>T&&</code>), <code>CalledByConstValue</code> (takes <code>const T</code>), <code>CalledByConstReference</code> (takes <code>const T&</code>), <code>CalledByConstForwardingReference</code> (takes <code>const T&&</code> - we wills see below that this is a bit of a misnomer).</p>
 <p>We&rsquo;re almost there. We just need a little helper that takes e.g. <code>CalledByValue</code> and <code>int&</code> as template arguments and returns either a string of type <code>T</code> or a string of the type of <code>x</code>. Firstly we&rsquo;ll define an enum to choose which of those two things we want in our table:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>enum</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TableType</span>
 {
@@ -118,7 +118,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   ARGUMENT_TYPE
 };
 </code></pre></div><p>Our function is then</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> Target, <span style=color:#66d9ef>typename</span> Arg, TableType table_type<span style=color:#f92672>&gt;</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span>TableType table_type, <span style=color:#66d9ef>typename</span> Target, <span style=color:#66d9ef>typename</span> Arg<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>auto</span> get_type_name ()
 {
 
@@ -149,14 +149,14 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span>TableType table_type, <span style=color:#66d9ef>typename</span> Target<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>void</span> make_table_row ()
 {
-  std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>int</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
-            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
-            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&amp;</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
-            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
-            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
-            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&amp;</span>, table_type<span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;|</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>;
+  std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
+            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
+            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&amp;&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
+            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
+            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#39;|&#39;</span>
+            <span style=color:#f92672>&lt;&lt;</span> get_type_name<span style=color:#f92672>&lt;</span>table_type, Target, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&amp;&gt;</span> () <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;|</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>;
 }
-</code></pre></div><p>We use the pipe symbol as a delimiter so I can easily put this into a Markdown table.</p>
+</code></pre></div><p>We use the pipe symbol as a delimiter so we can easily put this into a Markdown table.</p>
 <p>Making a whole table just means calling this once per row, with a header at the top:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span>TableType table_type<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>void</span> make_table ()
@@ -192,7 +192,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;decltype(x) is ... when called with:</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>;
   make_table<span style=color:#f92672>&lt;</span>TableType<span style=color:#f92672>::</span>ARGUMENT_TYPE<span style=color:#f92672>&gt;</span> ();
 }
-</code></pre></div><p>Phew. Here&rsquo;s the complete program on <a href=https://godbolt.org/z/vsTeE3xc1>compiler explorer</a>. Now let&rsquo;s look at the two tables:</p>
+</code></pre></div><p>Phew. Here&rsquo;s the complete program on <a href=https://godbolt.org/z/dv8czvMzq>compiler explorer</a>. Now let&rsquo;s look at the two tables:</p>
 <p><strong>T deduces as &mldr; when called with:</strong></p>
 <table>
 <thead>
@@ -333,23 +333,24 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 </tr>
 </tbody>
 </table>
-<p>To pick an example, if we have <code>f(T&& x)</code> and we call it with a <code>const int </code>, then <code>T</code> will be <code>const int&</code> (first table) and <code>x</code> will have type <code>const int&&</code> (second table). The &ldquo;-&ldquo;s represent arguments that can&rsquo;t be used for a particular function - you&rsquo;d get a compiler error.</p>
+<p>To pick an example, if we have <code>f(T&& x)</code> and we call it with a <code>const int</code>, then <code>T</code> will be <code>const int</code> (first table) and <code>x</code> will have type <code>const int&&</code> (second table). The &ldquo;-&ldquo;s represent arguments that can&rsquo;t be used for a particular function - you&rsquo;d get a compiler error.</p>
 <p>The table seems to be consistent with a few half-remembered rules of thumb:</p>
 <ul>
 <li><code>T</code> never deduces as a reference, unless you&rsquo;re in the <code>f(T&&)</code> magic case.</li>
 <li>With <code>f(const T x)</code>, the <code>const</code> makes no difference at all to the deduction of <code>T</code>, it&rsquo;s just to prevent us from changing <code>x</code> in the function.</li>
 <li>With <code>f(T& x)</code>, <code>T</code> deduces as <code>const</code> whenever it&rsquo;s needed.</li>
 <li><code>f(T x)</code> and <code>f(const T& x)</code> always work, no matter what you call them with. In latter case, it will extend a reference to a temporary if necessary.</li>
+<li><code>f(T&& x)</code> always works and will always give you some kind of (possibly const, possibly rvalue) reference.</li>
 </ul>
 <p>Another thing to note is that the column for <code>int</code> is identical to the column for <code>int&&</code>. This makes sense as we never care what sort of rvalue <code>f()</code> is being called with: <code>f(42)</code> (i.e. with <code>int</code>, a prvalue) and <code>f(std::move(some_int))</code> (i.e. with <code>int&&</code>, an xvalue) should be indistinguishable. We only care if it&rsquo;s an rvalue of one sort or another.</p>
 <p>There are four invalid ("-") combinations. In all these cases <code>T</code> deduces to <code>int</code> (we can confirm by looking at error messages), it&rsquo;s just you can&rsquo;t actually call them:</p>
 <ul>
 <li><code>f(T& x)</code> with <code>int</code>. So e.g. we can&rsquo;t call <code>f(function_returning_3())</code>. This is because C++ <a href=https://en.cppreference.com/w/cpp/language/lifetime#Temporary_object_lifetime>won&rsquo;t extend the lifetime</a> of the resulting temporary - it only does that for a const lvalue reference (i.e. <code>f(const T&)</code>) or to an rvalue reference (<code>f(const T&&)</code> or <code>f(T&&)</code>). If this were allowed, and it extended the lifetime of the temporary, it would make it too easy to write code that appears to be modifying a variable passed by reference, but is actually only modifying a temporary.</li>
 <li><code>f(T& x)</code> with <code>int&&</code>. In this case there&rsquo;s no need to extend a temporary - our <code>int</code> isn&rsquo;t going anywhere. But it&rsquo;s disallowed anyway, presumably for consistency between <code>int</code> and <code>int&&</code> as discussed above.</li>
-<li><code>f(const T&& x)</code> with <code>int&</code>. This is an interesting one. Our <code>f</code> in this case does <em>not</em> take a forwarding reference. The <code>const</code> inhibits the special behaviour, this is back to normal template argument deduction. <code>T</code> will never deduce as a reference - it&rsquo;s just plain <code>int</code> - so then we&rsquo;just trying to call <code>f(int&&)</code> with an <code>int&</code>, which is obviously not allowed (if it were allowed, <code>f()</code> might move from something that it&rsquo;s not safe to move from).</li>
+<li><code>f(const T&& x)</code> with <code>int&</code>. This is an interesting one. Our <code>f</code> in this case does <em>not</em> take a forwarding reference. The <code>const</code> inhibits the special behaviour, so this is back to normal template argument deduction. <code>T</code> will never deduce as a reference - it&rsquo;s just plain <code>int</code> - so then we are just trying to call <code>f(int&&)</code> with an <code>int&</code>, which is obviously not allowed (if it were allowed, <code>f()</code> might move from something that it&rsquo;s not safe to move from).</li>
 <li><code>f(const T&& x)</code> with <code>const int&</code>. Pretty much the same story as above, although because of the <code>const</code> it wouldn&rsquo;t actually be dangerous if it were allowed, just pointless and misleading.</li>
 </ul>
-<h1 id=conclusions>Conclusions</h1>
+<h1 id=summary>Summary</h1>
 <p>In Part 1 we looked at getting type information dynamically with the <code>typeid</code> operator, which produces useful-ish output but is better suited to checking the dynamic type of objects at runtime. In Part 2 we used a trick involving an incomplete type to get the compiler to print the mystery type as an error message. In Part 3 we used variable templates to give strings to the types we were interested in, then produced a table of deduced template arguments when calling templated functions.</p>
 </article>
 <nav class="no-print post-nav">
