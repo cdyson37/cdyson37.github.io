@@ -5,7 +5,7 @@ theme="manis"
 publishDir = "build"
 
 [permalinks]
-    blog = "/:year/:month/:filename/"
+    blog = "blog/:year/:month/:filename/"
 
 
 [params]
