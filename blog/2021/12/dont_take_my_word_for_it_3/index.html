@@ -86,7 +86,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 
 <span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;&gt;</span>
 <span style=color:#66d9ef>constexpr</span> <span style=color:#66d9ef>char</span> TypeName<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;&amp;&gt;</span>[] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;const int&amp;&amp;&#34;</span>;
-</code></pre></div><p>These are <a href=https://en.cppreference.com/w/cpp/language/variable_template>variable templates</a> introduced in C++14. So <code>TypeName&lt;int></code> will just give us a C-string of <code>"int"</code>. If we&rsquo;ve missed out a <code>TypeName</code> specialisation, we will get a compiler error as the base template for <code>TypeName</code> is not initialised.</p>
+</code></pre></div><p>These are <a href=https://en.cppreference.com/w/cpp/language/variable_template>variable templates</a> introduced in C++14. So <code>TypeName&lt;int></code> will give us a C-string of <code>"int"</code>. If we&rsquo;ve missed out a <code>TypeName</code> specialisation, we will get a compiler error as the base template for <code>TypeName</code> is not initialised.</p>
 <p>Next up, for convenience&rsquo;s sake we make a little pair type to store the deduced <code>T</code> and the type of <code>x</code> in each case. We could work out <code>x</code> ourselves but again, let&rsquo;s make the compiler do the work and reduce the risk of a mistake. The name of the struct will make sense in a moment:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T, <span style=color:#66d9ef>typename</span> U<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>ReturnedType</span>
@@ -94,7 +94,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   <span style=color:#66d9ef>using</span> deduced_template_argument <span style=color:#f92672>=</span> T; <span style=color:#75715e>// type T
 </span><span style=color:#75715e></span>  <span style=color:#66d9ef>using</span> argument_type <span style=color:#f92672>=</span> U;             <span style=color:#75715e>// type of x
 </span><span style=color:#75715e></span>};
-</code></pre></div><p>So - we want to try out e.g. <code>template &lt;typename T> f(T x)</code> with <code>x</code> as <code>int</code>, <code>int&</code> etc. But it&rsquo;s hard to talk about <code>f</code> since it&rsquo;s a template and not a function. We can&rsquo;t just take its address or use it as an argument to a template without first selecting a <code>T</code>, which totally undermines what we&rsquo;re trying to do since we&rsquo;re trying to find out what <code>T</code> would deduce to!</p>
+</code></pre></div><p>So - we want to try out e.g. <code>template &lt;typename T> f(T x)</code> with <code>x</code> as <code>int</code>, <code>int&</code> etc. But it&rsquo;s hard to talk about <code>f</code> since it&rsquo;s a template and not a function. We can&rsquo;t take its address or use it as an argument to a template without first selecting a <code>T</code>, which totally undermines what we&rsquo;re trying to do since we&rsquo;re trying to find out what <code>T</code> would deduce to!</p>
 <p>The solution is to wrap our <code>f</code> in something that we can give a name to:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>CalledByValue</span>
 {
@@ -102,7 +102,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   <span style=color:#66d9ef>static</span>
   <span style=color:#66d9ef>auto</span> f (T x) <span style=color:#f92672>-&gt;</span> ReturnedType<span style=color:#f92672>&lt;</span>T, <span style=color:#66d9ef>decltype</span> (x)<span style=color:#f92672>&gt;</span>;
 };
-</code></pre></div><p><code>CalledByValue</code> is an ordinary struct, not a template, and we can use it as a template argument. Rather than make the inner <code>f</code> just return void, we&rsquo;ve used our <code>ReturnedType</code> to encode both <code>T</code> and the type of <code>x</code>. We never actually call <code>f</code> (we&rsquo;re just going to ask the compiler what type it would return), so there&rsquo;s no need to actually provide a definition for the function.</p>
+</code></pre></div><p><code>CalledByValue</code> is an ordinary struct, not a template, and we can use it as a template argument. Rather than make the inner <code>f</code> return void, we&rsquo;ve used our <code>ReturnedType</code> to encode both <code>T</code> and the type of <code>x</code>. We never actually call <code>f</code> (we&rsquo;re only going to ask the compiler what type it would return), so there&rsquo;s no need to actually provide a definition for the function.</p>
 <p>Next we also define <code>CalledByReference</code>:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>CalledByReference</span>
 {
@@ -121,7 +121,6 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span>TableType table_type, <span style=color:#66d9ef>typename</span> Target, <span style=color:#66d9ef>typename</span> Arg<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>auto</span> get_type_name ()
 {
-
   <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>constexpr</span> (<span style=color:#f92672>!</span><span style=color:#66d9ef>requires</span> {Target<span style=color:#f92672>::</span>f (std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>Arg<span style=color:#f92672>&gt;</span> ());})
   {
     <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;-&#34;</span>;
@@ -141,10 +140,10 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   }
 }
 </code></pre></div><p>So <code>Target</code> will be something like <code>CalledByValue</code> and <code>Arg</code> will be something like <code>int&</code>.</p>
-<p>Our first <code>if</code> just returns a <code>"-"</code> if it&rsquo;s impossible to call <code>Target::f</code> with an argument of type <code>Arg</code>. The <code>requires</code> keyword gives us a bool that can be used in a <code>constexpr</code> context. &ldquo;if constexpr requires&rdquo; doesn&rsquo;t sound terribly grammatical to me, but it gets the job done.</p>
-<p>You might be tempted instead to just try <code>if constexpr (!std::is_invocable&lt;decltype (Target::f), Arg> ())</code>, but that won&rsquo;t work because <code>Target::f</code> doesn&rsquo;t have a type - it&rsquo;s a template! If we don&rsquo;t have C++20 and <code>requires</code> to hand then the problem can be solved with some <a href=https://en.cppreference.com/w/cpp/types/void_t>void_t</a> trickery.</p>
+<p>Our first <code>if</code> causes us to return an <code>"-"</code> if it&rsquo;s impossible to call <code>Target::f</code> with an argument of type <code>Arg</code>. The <code>requires</code> keyword gives us a bool that can be used in a <code>constexpr</code> context. &ldquo;if constexpr requires&rdquo; doesn&rsquo;t sound terribly grammatical to me, but it gets the job done.</p>
+<p>You might be tempted instead to try <code>if constexpr (!std::is_invocable&lt;decltype (Target::f), Arg> ())</code>, but that won&rsquo;t work because <code>Target::f</code> doesn&rsquo;t have a type - it&rsquo;s a template! If we don&rsquo;t have C++20 and <code>requires</code> to hand then the problem can be solved with some <a href=https://en.cppreference.com/w/cpp/types/void_t>void_t</a> trickery.</p>
 <p>Once we&rsquo;re past that first <code>if constexpr</code> the rest falls into place nicely. We know it&rsquo;s safe to do the <code>decltype</code> because we&rsquo;ve established that <code>Target::f</code> really can be called with an <code>Arg</code>. We know <code>Result</code> is then <code>ReturnedType&lt;T, decltype(x)></code> (because that&rsquo;s what all the <code>f</code>s return) so it&rsquo;s then a matter of extracting one of those two things from <code>ReturnedType</code> and converting that to a string with <code>TypeName</code>.</p>
-<p>The rest of the program is just handle-turning. We could try to be clever and iterate through the various types with variadics but I think that just makes it harder to read.</p>
+<p>The rest of the program is handle-turning. We could try to be clever and iterate through the various types with variadics but I think that makes it harder to read.</p>
 <p>First, a function to make to make a single table row. Here <code>table_type</code> specifies whether we want <code>T</code> or <code>decltype(x)</code> and <code>Target</code> as before might be <code>CalledByValue</code>.</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span>TableType table_type, <span style=color:#66d9ef>typename</span> Target<span style=color:#f92672>&gt;</span>
 <span style=color:#66d9ef>void</span> make_table_row ()
@@ -182,7 +181,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;|f(T&amp;&amp; x)|&#34;</span>;
   make_table_row<span style=color:#f92672>&lt;</span>table_type, CalledByForwardingReference<span style=color:#f92672>&gt;</span> ();
 }
-</code></pre></div><p>Finally <code>main()</code> just makes the two types of table:</p>
+</code></pre></div><p>Finally <code>main()</code> makes the two types of table:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span> ()
 {
   std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;T deduces as ... when called with:</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>;
@@ -192,7 +191,7 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
   std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;decltype(x) is ... when called with:</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>;
   make_table<span style=color:#f92672>&lt;</span>TableType<span style=color:#f92672>::</span>ARGUMENT_TYPE<span style=color:#f92672>&gt;</span> ();
 }
-</code></pre></div><p>Phew. Here&rsquo;s the complete program on <a href=https://godbolt.org/z/dv8czvMzq>compiler explorer</a>. Now let&rsquo;s look at the two tables:</p>
+</code></pre></div><p>Phew. Here&rsquo;s the complete program on <a href=https://godbolt.org/z/MfWsW16fK>compiler explorer</a>. Now let&rsquo;s look at the two tables:</p>
 <p><strong>T deduces as &mldr; when called with:</strong></p>
 <table>
 <thead>
@@ -337,17 +336,17 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <p>The table seems to be consistent with a few half-remembered rules of thumb:</p>
 <ul>
 <li><code>T</code> never deduces as a reference, unless you&rsquo;re in the <code>f(T&&)</code> magic case.</li>
-<li>With <code>f(const T x)</code>, the <code>const</code> makes no difference at all to the deduction of <code>T</code>, it&rsquo;s just to prevent us from changing <code>x</code> in the function.</li>
+<li>With <code>f(const T x)</code>, the <code>const</code> makes no difference at all to the deduction of <code>T</code>, it&rsquo;s only to prevent us from changing <code>x</code> in the function.</li>
 <li>With <code>f(T& x)</code>, <code>T</code> deduces as <code>const</code> whenever it&rsquo;s needed.</li>
 <li><code>f(T x)</code> and <code>f(const T& x)</code> always work, no matter what you call them with. In latter case, it will extend a reference to a temporary if necessary.</li>
 <li><code>f(T&& x)</code> always works and will always give you some kind of (possibly const, possibly rvalue) reference.</li>
 </ul>
 <p>Another thing to note is that the column for <code>int</code> is identical to the column for <code>int&&</code>. This makes sense as we never care what sort of rvalue <code>f()</code> is being called with: <code>f(42)</code> (i.e. with <code>int</code>, a prvalue) and <code>f(std::move(some_int))</code> (i.e. with <code>int&&</code>, an xvalue) should be indistinguishable. We only care if it&rsquo;s an rvalue of one sort or another.</p>
-<p>There are four invalid ("-") combinations. In all these cases <code>T</code> deduces to <code>int</code> (we can confirm by looking at error messages), it&rsquo;s just you can&rsquo;t actually call them:</p>
+<p>There are four invalid ("-") combinations. In all these cases <code>T</code> deduces to <code>int</code> (we can confirm by looking at error messages), but you can&rsquo;t actually call them:</p>
 <ul>
 <li><code>f(T& x)</code> with <code>int</code>. So e.g. we can&rsquo;t call <code>f(function_returning_3())</code>. This is because C++ <a href=https://en.cppreference.com/w/cpp/language/lifetime#Temporary_object_lifetime>won&rsquo;t extend the lifetime</a> of the resulting temporary - it only does that for a const lvalue reference (i.e. <code>f(const T&)</code>) or to an rvalue reference (<code>f(const T&&)</code> or <code>f(T&&)</code>). If this were allowed, and it extended the lifetime of the temporary, it would make it too easy to write code that appears to be modifying a variable passed by reference, but is actually only modifying a temporary.</li>
 <li><code>f(T& x)</code> with <code>int&&</code>. In this case there&rsquo;s no need to extend a temporary - our <code>int</code> isn&rsquo;t going anywhere. But it&rsquo;s disallowed anyway, presumably for consistency between <code>int</code> and <code>int&&</code> as discussed above.</li>
-<li><code>f(const T&& x)</code> with <code>int&</code>. This is an interesting one. Our <code>f</code> in this case does <em>not</em> take a forwarding reference. The <code>const</code> inhibits the special behaviour, so this is back to normal template argument deduction. <code>T</code> will never deduce as a reference - it&rsquo;s just plain <code>int</code> - so then we are just trying to call <code>f(int&&)</code> with an <code>int&</code>, which is obviously not allowed (if it were allowed, <code>f()</code> might move from something that it&rsquo;s not safe to move from).</li>
+<li><code>f(const T&& x)</code> with <code>int&</code>. This is an interesting one. Our <code>f</code> in this case does <em>not</em> take a forwarding reference. The <code>const</code> inhibits the special behaviour, so this is back to normal template argument deduction. <code>T</code> will never deduce as a reference - it&rsquo;s plain <code>int</code> - so then we are trying to call <code>f(int&&)</code> with an <code>int&</code>, which is obviously not allowed (if it were allowed, <code>f()</code> might move from something that it&rsquo;s not safe to move from).</li>
 <li><code>f(const T&& x)</code> with <code>const int&</code>. Pretty much the same story as above, although because of the <code>const</code> it wouldn&rsquo;t actually be dangerous if it were allowed, just pointless and misleading.</li>
 </ul>
 <h1 id=summary>Summary</h1>
