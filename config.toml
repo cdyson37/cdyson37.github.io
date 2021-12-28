@@ -12,9 +12,10 @@ publishDir = "build"
     tagline = "Some thinkings"
     dateFmt = "02 Jan 2006"
 
-    # utterancesRepo = ""
-    # utterancesTheme = "github-light"
-    # utterancesLabel = ""
+    utterancesRepo = "cdyson37/cdyson37.github.io"
+    utterancesTheme = "github-light"
+    utterancesLabel = "utterance"
+    utterancesSections = [ "blog" ]
 
     colorTheme = "#ff6565"
 
