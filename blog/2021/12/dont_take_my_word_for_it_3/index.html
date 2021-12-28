@@ -32,7 +32,7 @@
 </hgroup>
 <hr class=sep>
 </header>
-<p>In <a href=https://charliedyson.net/2021/12/dont_take_my_word_for_it_1/>Part 1</a> we looked at the <code>typeid</code> operator and in <a href=https://charliedyson.net/2021/12/dont_take_my_word_for_it_2/>Part 2</a> we used a little cheat to work out mystery types using compiler error messages.</p>
+<p>In <a href=https://charliedyson.net/blog/2021/12/dont_take_my_word_for_it_1/>Part 1</a> we looked at the <code>typeid</code> operator and in <a href=https://charliedyson.net/blog/2021/12/dont_take_my_word_for_it_2/>Part 2</a> we used a little cheat to work out mystery types using compiler error messages.</p>
 <p>Let&rsquo;s take this a bit further and try to answer a general question: if I call some function template <code>f(T x)</code>, <code>f(T &x)</code>, <code>f(T &&x)</code> (or <code>const</code> versions of any of those) with an <code>int</code>, <code>int&</code> or <code>int&&</code> (or <code>const</code> versions of any of those), to what does <code>T</code> deduce? And what&rsquo;s the resulting type of <code>x</code>?</p>
 <p>That&rsquo;s 36 possible combinations in each of two tables (one for <code>T</code> and one for <code>x</code>). We can work them out on an individual basis with the technique from Part 2. For example if we wanted to know what happens if we call <code>f(T&& x)</code> and <code>x</code> is <code>int&&</code>:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;utility&gt;</span><span style=color:#75715e>
@@ -353,9 +353,10 @@ prog.cc:10:30: error: 'Incomplete&lt;int&amp;&amp;&gt; incomplete' has incomplet
 <p>In Part 1 we looked at getting type information dynamically with the <code>typeid</code> operator, which produces useful-ish output but is better suited to checking the dynamic type of objects at runtime. In Part 2 we used a trick involving an incomplete type to get the compiler to print the mystery type as an error message. In Part 3 we used variable templates to give strings to the types we were interested in, then produced a table of deduced template arguments when calling templated functions.</p>
 </article>
 <nav class="no-print post-nav">
-<a class=prev-post href=https://charliedyson.net/2021/12/dont_take_my_word_for_it_2/>
+<a class=prev-post href=https://charliedyson.net/blog/2021/12/dont_take_my_word_for_it_2/>
 <img class=icon-text src=/img/prev.svg>Don't Take My Word For It (Part 2): Tricking the compiler</a>
 </nav>
+<script src=https://utteranc.es/client.js repo=cdyson37/cdyson37.github.io issue-term=url label=utterance theme=github-light crossorigin=anonymous async></script>
 <hr class=sep>
 </main>
 <footer class="container no-print">
